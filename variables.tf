@@ -243,14 +243,6 @@ variable "s3_replication_enabled" {
     condition     = !var.s3_replication_enabled || length(coalesce(var.replication_rules, var.s3_replication_rules, [])) > 0
     error_message = "When s3_replication_enabled is true, you must provide at least one replication rule via s3_replication_rules (or deprecated replication_rules)."
   }
-
-  validation {
-    condition = !var.s3_replication_enabled || (
-      try(length(var.s3_replica_bucket_arn), 0) > 0 ||
-      anytrue([for r in coalesce(var.replication_rules, var.s3_replication_rules, []) : try(length(r.destination_bucket), 0) > 0])
-    )
-    error_message = "When s3_replication_enabled is true, you must set s3_replica_bucket_arn or set destination_bucket in at least one replication rule."
-  }
 }
 
 variable "s3_replica_bucket_arn" {
