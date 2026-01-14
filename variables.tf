@@ -347,11 +347,6 @@ variable "website_redirect_all_requests_to" {
     condition     = length(var.website_redirect_all_requests_to) < 2
     error_message = "Only 1 website_redirect_all_requests_to is allowed."
   }
-
-  validation {
-    condition     = length(var.website_redirect_all_requests_to) == 0 || length(var.website_configuration) == 0
-    error_message = "website_redirect_all_requests_to is mutually exclusive with website_configuration."
-  }
 }
 
 variable "website_configuration" {
