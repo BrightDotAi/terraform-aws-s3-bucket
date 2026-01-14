@@ -67,6 +67,11 @@ variable "sse_algorithm" {
   type        = string
   default     = "AES256"
   description = "The server-side encryption algorithm to use. Valid values are `AES256` and `aws:kms`"
+
+  validation {
+    condition     = contains(["AES256", "aws:kms"], var.sse_algorithm)
+    error_message = "Valid values for sse_algorithm are \"AES256\" and \"aws:kms\"."
+  }
 }
 
 variable "kms_master_key_arn" {
@@ -228,6 +233,16 @@ variable "s3_replication_enabled" {
   type        = bool
   default     = false
   description = "Set this to true and specify `s3_replication_rules` to enable replication. `versioning_enabled` must also be `true`."
+
+  validation {
+    condition     = !var.s3_replication_enabled || var.versioning_enabled
+    error_message = "When s3_replication_enabled is true, versioning_enabled must also be true."
+  }
+
+  validation {
+    condition     = !var.s3_replication_enabled || length(coalesce(var.replication_rules, var.s3_replication_rules, [])) > 0
+    error_message = "When s3_replication_enabled is true, you must provide at least one replication rule via s3_replication_rules (or deprecated replication_rules)."
+  }
 }
 
 variable "s3_replica_bucket_arn" {
@@ -351,6 +366,11 @@ variable "website_configuration" {
     condition     = length(var.website_configuration) < 2
     error_message = "Only 1 website_configuration is allowed."
   }
+
+  validation {
+    condition     = length(var.website_configuration) == 0 || length(var.website_redirect_all_requests_to) == 0
+    error_message = "website_configuration is mutually exclusive with website_redirect_all_requests_to."
+  }
 }
 
 # Need input to be a list to fix https://github.com/cloudposse/terraform-aws-s3-bucket/issues/102
@@ -417,4 +437,9 @@ variable "bucket_key_enabled" {
   Set this to true to use Amazon S3 Bucket Keys for SSE-KMS, which may reduce the number of AWS KMS requests.
   For more information, see: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-key.html
   EOT
+
+  validation {
+    condition     = !var.bucket_key_enabled || var.sse_algorithm == "aws:kms"
+    error_message = "bucket_key_enabled can only be true when sse_algorithm is \"aws:kms\"."
+  }
 }

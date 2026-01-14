@@ -73,11 +73,13 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
   bucket = join("", aws_s3_bucket.default.*.id)
 
   rule {
-    bucket_key_enabled = var.bucket_key_enabled
+    # Bucket Keys are only valid for SSE-KMS
+    bucket_key_enabled = var.sse_algorithm == "aws:kms" ? var.bucket_key_enabled : false
 
     apply_server_side_encryption_by_default {
-      sse_algorithm     = var.sse_algorithm
-      kms_master_key_id = var.kms_master_key_arn
+      sse_algorithm = var.sse_algorithm
+      # Only valid for SSE-KMS; empty string is treated as unset.
+      kms_master_key_id = var.sse_algorithm == "aws:kms" && try(length(var.kms_master_key_arn), 0) > 0 ? var.kms_master_key_arn : null
     }
   }
 }
