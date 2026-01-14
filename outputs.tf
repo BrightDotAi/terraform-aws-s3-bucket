@@ -9,12 +9,12 @@ output "bucket_regional_domain_name" {
 }
 
 output "bucket_website_domain" {
-  value       = join("", aws_s3_bucket_website_configuration.default.*.website_domain, aws_s3_bucket_website_configuration.redirect.*.website_domain)
+  value       = join("", concat(aws_s3_bucket_website_configuration.default.*.website_domain, aws_s3_bucket_website_configuration.redirect.*.website_domain))
   description = "The bucket website domain, if website is enabled"
 }
 
 output "bucket_website_endpoint" {
-  value       = join("", aws_s3_bucket_website_configuration.default.*.website_endpoint, aws_s3_bucket_website_configuration.redirect.*.website_endpoint)
+  value       = join("", concat(aws_s3_bucket_website_configuration.default.*.website_endpoint, aws_s3_bucket_website_configuration.redirect.*.website_endpoint))
   description = "The bucket website endpoint, if website is enabled"
 }
 
