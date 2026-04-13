@@ -1,9 +1,9 @@
 data "aws_caller_identity" "cross_account" {
-  count = length(var.cross_account_bucket_policy_stacks) > 0 ? 1 : 0
+  count = local.enabled && length(var.cross_account_bucket_policy_stacks) > 0 ? 1 : 0
 }
 
 module "cross_account_policy_stacks" {
-  for_each = local.cross_account_policy_refs
+  for_each = local.enabled ? local.cross_account_policy_refs : {}
 
   source  = "cloudposse/stack-config/yaml//modules/remote-state"
   version = "1.5.0"

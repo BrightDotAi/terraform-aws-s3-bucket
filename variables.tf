@@ -56,7 +56,7 @@ locals {
     }
   }
 
-  cross_account_bucket_policies = length(var.cross_account_bucket_policy_stacks) > 0 ? flatten([
+  cross_account_bucket_policies = local.enabled && length(var.cross_account_bucket_policy_stacks) > 0 ? flatten([
     for ref, mod in module.cross_account_policy_stacks :
     try([mod.outputs.cross_account_bucket_policies[data.aws_caller_identity.cross_account[0].account_id][local.bucket_name]], [])
   ]) : []
