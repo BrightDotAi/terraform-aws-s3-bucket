@@ -7,11 +7,13 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   check-version-bump:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4
@@ -19,15 +21,25 @@ jobs:
       - name: Get PR module_version
         id: pr
         run: |
+          set -euo pipefail
           VERSION=$(grep '^module_version:' .spacelift/config.yml | awk '{print $2}' | tr -d '"' | tr -d "'")
+          if [ -z "$VERSION" ]; then
+            echo "::error::module_version not found in .spacelift/config.yml on this branch."
+            exit 1
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "PR version: $VERSION"
 
       - name: Get main module_version
         id: main
         run: |
+          set -euo pipefail
           git fetch origin main --depth=1
           VERSION=$(git show origin/main:.spacelift/config.yml | grep '^module_version:' | awk '{print $2}' | tr -d '"' | tr -d "'")
+          if [ -z "$VERSION" ]; then
+            echo "::error::module_version not found in .spacelift/config.yml on main."
+            exit 1
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Main version: $VERSION"
 
@@ -36,6 +48,7 @@ jobs:
           MAIN: ${{ steps.main.outputs.version }}
           PR: ${{ steps.pr.outputs.version }}
         run: |
+          set -euo pipefail
           echo "Main: $MAIN"
           echo "PR:   $PR"
 
