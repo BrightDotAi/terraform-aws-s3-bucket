@@ -22,7 +22,7 @@ jobs:
         id: pr
         run: |
           set -euo pipefail
-          VERSION=$(grep '^module_version:' .spacelift/config.yml | awk '{print $2}' | tr -d '"' | tr -d "'")
+          VERSION=$(grep '^module_version:' .spacelift/config.yml | awk '{print $2}' | tr -d '"' | tr -d "'" || true)
           if [ -z "$VERSION" ]; then
             echo "::error::module_version not found in .spacelift/config.yml on this branch."
             exit 1
@@ -35,7 +35,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin main --depth=1
-          VERSION=$(git show origin/main:.spacelift/config.yml | grep '^module_version:' | awk '{print $2}' | tr -d '"' | tr -d "'")
+          VERSION=$(git show origin/main:.spacelift/config.yml | grep '^module_version:' | awk '{print $2}' | tr -d '"' | tr -d "'" || true)
           if [ -z "$VERSION" ]; then
             echo "::error::module_version not found in .spacelift/config.yml on main."
             exit 1
