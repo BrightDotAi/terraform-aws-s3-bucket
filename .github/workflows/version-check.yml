@@ -32,10 +32,10 @@ jobs:
           echo "Main version: $VERSION"
 
       - name: Validate version bump
+        env:
+          MAIN: ${{ steps.main.outputs.version }}
+          PR: ${{ steps.pr.outputs.version }}
         run: |
-          MAIN="${{ steps.main.outputs.version }}"
-          PR="${{ steps.pr.outputs.version }}"
-
           echo "Main: $MAIN"
           echo "PR:   $PR"
 
