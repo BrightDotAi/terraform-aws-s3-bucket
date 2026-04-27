@@ -468,6 +468,28 @@ data "aws_iam_policy_document" "bucket_policy" {
   }
 }
 
+locals {
+  cross_account_policy_refs = {
+    for ref in var.cross_account_bucket_policy_stacks : ref => {
+      tenant      = split("/", ref)[0]
+      environment = split("/", ref)[1]
+      stage       = split("/", ref)[2]
+      component   = split("/", ref)[3]
+    }
+  }
+
+  cross_account_bucket_policies = local.enabled && length(var.cross_account_bucket_policy_stacks) > 0 ? flatten([
+    for ref, mod in module.cross_account_policy_stacks :
+    try([mod.outputs.cross_account_bucket_policies[data.aws_caller_identity.cross_account[0].account_id][local.bucket_name]], [])
+  ]) : []
+
+  source_policy_documents = compact(concat(
+    [var.policy],
+    var.source_policy_documents,
+    local.cross_account_bucket_policies
+  ))
+}
+
 data "aws_iam_policy_document" "aggregated_policy" {
   count = local.enabled ? 1 : 0
 
@@ -476,7 +498,7 @@ data "aws_iam_policy_document" "aggregated_policy" {
 }
 
 resource "aws_s3_bucket_policy" "default" {
-  count      = local.enabled && (var.allow_ssl_requests_only || var.allow_encrypted_uploads_only || length(var.s3_replication_source_roles) > 0 || length(var.privileged_principal_arns) > 0 || length(var.source_policy_documents) > 0 || length(var.cross_account_bucket_policy_stacks) > 0) ? 1 : 0
+  count      = local.enabled && (var.allow_ssl_requests_only || var.allow_encrypted_uploads_only || length(var.s3_replication_source_roles) > 0 || length(var.privileged_principal_arns) > 0 || length(var.source_policy_documents) > 0 || length(local.cross_account_bucket_policies) > 0) ? 1 : 0
   bucket     = join("", aws_s3_bucket.default.*.id)
   policy     = join("", data.aws_iam_policy_document.aggregated_policy.*.json)
   depends_on = [aws_s3_bucket_public_access_block.default]
