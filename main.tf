@@ -468,6 +468,28 @@ data "aws_iam_policy_document" "bucket_policy" {
   }
 }
 
+locals {
+  cross_account_policy_refs = {
+    for ref in var.cross_account_bucket_policy_stacks : ref => {
+      tenant      = split("/", ref)[0]
+      environment = split("/", ref)[1]
+      stage       = split("/", ref)[2]
+      component   = split("/", ref)[3]
+    }
+  }
+
+  cross_account_bucket_policies = local.enabled && length(var.cross_account_bucket_policy_stacks) > 0 ? flatten([
+    for ref, mod in module.cross_account_policy_stacks :
+    try([mod.outputs.cross_account_bucket_policies[data.aws_caller_identity.cross_account[0].account_id][local.bucket_name]], [])
+  ]) : []
+
+  source_policy_documents = compact(concat(
+    [var.policy],
+    var.source_policy_documents,
+    local.cross_account_bucket_policies
+  ))
+}
+
 data "aws_iam_policy_document" "aggregated_policy" {
   count = local.enabled ? 1 : 0
 
